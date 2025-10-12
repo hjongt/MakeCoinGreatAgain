@@ -7,6 +7,7 @@ While serving in the military, we are developing our own crypto trading script â
 This is a crypto auto-trading bot built with Python.  
 It uses indicators like Double Bollinger Bands, Keltner Channel, Squeeze Momentum, ATR, RSI, FRVP, and more.  
 Custom strategies are applied to automate the trading process.
+Making our prototype using Pine Script. Going to publish our script using Python.
 
 ### Features
 - Real-time data fetching
