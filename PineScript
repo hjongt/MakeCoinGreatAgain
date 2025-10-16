@@ -1,0 +1,67 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © dotorihanjum
+
+//@version=6
+strategy("Double_BB_strategy", overlay = true, fill_orders_on_standard_ohlc = true, margin_long = 0, margin_short = 0)
+
+
+// 볼린저밴드 그리기
+[middle_20, upper_20, lower_20] = ta.bb(close, 20, 2)
+[middle_4, upper_4, lower_4] = ta.bb(open, 4, 4)
+
+plot(upper_20,color = color.blue)
+plot(lower_20,color = color.blue)
+plot(upper_4,color = color.red)
+plot(lower_4,color = color.red)
+
+// 볼린저밴드 조건 생성
+is_LongdoubleB = lower_4 >= low and lower_20 >= low
+
+// 이평선 그리기
+ema_20 = ta.ema(close, 20)
+ema_50 = ta.ema(close, 50)
+ema_200 = ta.ema(close, 200)
+
+plot(ema_20, color = color.orange)
+plot(ema_50, color = color.teal)
+plot(ema_200, color = color.purple)
+
+// FRVP 그리기
+
+
+// 이격도 변수 생성(sma을 ema로 바꿔봐도 괜찮음)
+sma_20 = ta.sma(close,20)
+disparity = (close/sma_20*100)
+
+// RSI 변수 생성
+rsi = ta.rsi(close,14)
+
+// MACD 변수 생성
+MACDline = ta.sma(close,12) - ta.sma(close,26)
+MACDsignal = ta.sma(MACDline, 9)
+
+// Squeeze Momentum을 위한 Keltner Channel 변수 생성
+KC_upper = sma_20 + (1.5 * ta.sma(ta.tr,20))
+KC_lower = sma_20 - (1.5 * ta.sma(ta.tr,20))
+// Squeeze Momentum 변수 생성
+sqzON = lower_20 > KC_lower and upper_20 < KC_upper
+sqzOFF = lower_20 < KC_lower and upper_20 > KC_upper
+sqzNO =  not sqzON and not sqzOFF
+
+val = ta.linreg(close - ((ta.highest(high, 20) + ta.lowest(low, 20))/2 + sma_20)/2, 20, 0)
+bcolor = val > 0 ? val > nz(val[1]) ? color.lime : color.green : val < nz(val[1]) ? color.red : color.maroon
+scolor = sqzNO ? color.blue : sqzON ? color.black : color.gray
+// 회색 매수
+
+// ATR 변수 생성
+atr = ta.atr(14)
+
+// 캔들 패턴 생성
+bullishHammer = close > open and (open - low) >= 2 * (close - open)
+bearishHammer = open > close and (high - open) >= 2 * (open - close)
+
+longCondition = is_LongdoubleB
+if (longCondition)
+    strategy.entry("My Long Entry Id", strategy.long)
+else if rsi > 80
+    strategy.close("My Long Entry Id")
