@@ -15,7 +15,7 @@ plot(upper_4,color = color.red)
 plot(lower_4,color = color.red)
 
 // 볼린저밴드 조건 생성
-is_LongdoubleB = lower_4 >= low and lower_20 >= low
+is_LongdoubleB = (lower_4 >= low and lower_20 >= low) or (lower_4[1] >= low[1] and lower_20[1] >= low[1])
 
 // 이평선 그리기
 ema_20 = ta.ema(close, 20)
@@ -26,7 +26,22 @@ plot(ema_20, color = color.orange)
 plot(ema_50, color = color.teal)
 plot(ema_200, color = color.purple)
 
-// FRVP 그리기
+// FVG 찾기
+// 상승 FVG
+
+
+// 하락 FVG
+
+// ORDER BLOCK
+// 상승장악형 OB
+is_AOB = open[1] < close[0] and close[1] >= open[0] and open[1] > close[1] and open[0] < close[0] and (close[0] - open[0]) >= 1.5 * (open[1] - close[1])
+// close[1] ~ open[1] 지지저항 구간 사용
+
+
+// 하락장악형 OB
+is_DOB = open[1] > close[0] and close[1] <= open[0] and open[1] < close[1] and open[0] > close[0] and (close[1] - open[1]) * 1.5 < (open[0] - close[0])
+// open[1] ~ close[1] 지지저항 구간 사용
+
 
 
 // 이격도 변수 생성(sma을 ema로 바꿔봐도 괜찮음)
@@ -60,8 +75,8 @@ atr = ta.atr(14)
 bullishHammer = close > open and (open - low) >= 2 * (close - open)
 bearishHammer = open > close and (high - open) >= 2 * (open - close)
 
-longCondition = is_LongdoubleB
+longCondition = is_LongdoubleB and is_AOB
 if (longCondition)
     strategy.entry("My Long Entry Id", strategy.long)
-else if rsi > 80
+else if rsi > 70
     strategy.close("My Long Entry Id")
