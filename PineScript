@@ -1,8 +1,7 @@
-// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © dotorihanjum
 
 //@version=6
-strategy("Double_BB_strategy", overlay = true, fill_orders_on_standard_ohlc = true, margin_long = 0, margin_short = 0)
+strategy("Double_BB_strategy", overlay = true, fill_orders_on_standard_ohlc = true, initial_capital = 1000, default_qty_type = strategy.percent_of_equity, default_qty_value = 5, margin_long = 0)
 
 
 // 볼린저밴드 그리기
@@ -16,6 +15,7 @@ plot(lower_4,color = color.red)
 
 // 볼린저밴드 조건 생성
 is_LongdoubleB = (lower_4 >= low and lower_20 >= low) or (lower_4[1] >= low[1] and lower_20[1] >= low[1])
+is_LongoneB = (lower_4 >= low and lower_20 < low) or (lower_4[1] >= low and lower_20[1] < low)
 
 // 이평선 그리기
 ema_20 = ta.ema(close, 20)
@@ -25,6 +25,16 @@ ema_200 = ta.ema(close, 200)
 plot(ema_20, color = color.orange)
 plot(ema_50, color = color.teal)
 plot(ema_200, color = color.purple)
+
+// 이평선 조건 생성
+// 20, 50 벌어짐
+is_emaopen = ema_20[1] >= ema_50[1] and ema_20 > ema_50 and ema_20 - ema_50 >= ema_20[1] - ema_50[1]
+// 20, 50골든크로스
+is_Goldencross = ema_20[1] < ema_50[1] and ema_20[0] > ema_50[0]
+
+// 정배열
+is_DOUregarr = ema_20 > ema_50
+is_TRIregarr = ema_20 > ema_50 and ema_50 > ema_200
 
 // FVG 찾기
 // 상승 FVG
@@ -48,12 +58,26 @@ is_DOB = open[1] > close[0] and close[1] <= open[0] and open[1] < close[1] and o
 sma_20 = ta.sma(close,20)
 disparity = (close/sma_20*100)
 
+// 이격도 조건 생성
+
+
+
 // RSI 변수 생성
 rsi = ta.rsi(close,14)
+
+// RSI 조건 생성
+
 
 // MACD 변수 생성
 MACDline = ta.sma(close,12) - ta.sma(close,26)
 MACDsignal = ta.sma(MACDline, 9)
+
+// MACD 조건 생성
+// MACD cross
+is_MACDcross = MACDline > MACDsignal and MACDline[1] <= MACDsignal[1]
+
+// MACD 단순추세
+is_MACD = MACDline > MACDsignal
 
 // Squeeze Momentum을 위한 Keltner Channel 변수 생성
 KC_upper = sma_20 + (1.5 * ta.sma(ta.tr,20))
@@ -68,14 +92,30 @@ bcolor = val > 0 ? val > nz(val[1]) ? color.lime : color.green : val < nz(val[1]
 scolor = sqzNO ? color.blue : sqzON ? color.black : color.gray
 // 회색 매수
 
+// Squeeze Momentum 조건 생성
+// 진입 타이밍
+is_SQZMOM = (bcolor == color.lime or bcolor == color.green) and scolor == color.gray
+
+is_green = bcolor == color.lime or bcolor == color.green
+is_red = bcolor == color.red or bcolor == color.maroon
+
+// 추세약화
+is_gtl = bcolor[1] == color.green and bcolor == color.lime
+
+// 추세 전환
+is_gtr = is_green[1] and is_red
 // ATR 변수 생성
 atr = ta.atr(14)
+
+// ATR 조건 생성
+
 
 // 캔들 패턴 생성
 bullishHammer = close > open and (open - low) >= 2 * (close - open)
 bearishHammer = open > close and (high - open) >= 2 * (open - close)
 
-longCondition = is_LongdoubleB and is_AOB
+
+longCondition = is_LongoneB and is_SQZMOM and is_emaopen
 if (longCondition)
     strategy.entry("My Long Entry Id", strategy.long)
 else if rsi > 70
